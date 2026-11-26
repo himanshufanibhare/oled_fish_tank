@@ -81,13 +81,15 @@ const bool FLIP_MIRROR_TILT    = true;   // flipped device: swap left/right tilt
 
 #define TILT_AXIS   1
 #define TILT_SIGN  -1
-const float TAP_G        = 0.50f;
+const float TAP_G        = 0.35f;
 const float STILL_G      = 0.06f;
 const float SHAKE_G      = 0.80f;
 const int   SHAKE_SWINGS = 5;       // add this back
 const float SLOSH_GAIN   = 2.4f;    // new
 const float AIM_GAIN     = 150.0f;  // new
-
+const int SCARE_MIN_MS   = 2000;   // knock: shortest scare (ms)
+const int SCARE_MAX_MS   = 4000;   // knock: longest scare (ms)
+const int SHAKE_EXTRA_MS = 1000;   // a shake lasts this much longer (ms)
 const uint32_t SLEEP_AFTER_MS = 120000UL;   // sit still this long (ms) before the screen dims
 const bool IMU_DEBUG = false;   // true = print readings in the Serial Monitor (115200) to check the axes
 
@@ -347,7 +349,7 @@ void updateFish(int fi) {
 
   // startled by a knock or shake: dart away for a moment
   if (millis() < f.panicUntil) {
-    tx = f.dir * f.speed * 3.5f;
+    tx = f.dir * f.speed * 6.1f;
     ty = (f.targetY - f.y) * 0.03f;
   }
 
@@ -952,7 +954,9 @@ void scareAll(bool shake) {
   unsigned long now = millis();
   for (int i = 0; i < NUM_FISH; i++) {
     fish[i].dir = (random(0, 2) == 0) ? -1 : 1;
-    fish[i].panicUntil = now + random(900, 1600) + (shake ? 600 : 0);
+    // fish[i].panicUntil = now + random(900, 1600) + (shake ? 600 : 0);
+    fish[i].panicUntil = now + random(SCARE_MIN_MS, SCARE_MAX_MS) + (shake ? SHAKE_EXTRA_MS : 0);
+    fish[i].nextTurn   = fish[i].panicUntil;   // don't let a random turn interrupt the scare
     fish[i].vx = fish[i].dir * 2.0f;
     fish[i].vy = random(-10, 11) / 10.0f;
     fish[i].targetY = random(12, FLOOR_Y - 12);
